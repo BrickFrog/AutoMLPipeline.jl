@@ -52,6 +52,8 @@ function __init__()
    metric_dict["mean_gamma_deviance"]             = SKM.mean_gamma_deviance
    metric_dict["mean_tweedie_deviance"]           = SKM.mean_tweedie_deviance
    metric_dict["explained_variance_score"]        = SKM.explained_variance_score
+   # custom
+   metric_dict["make_scorer"]                     = SKM.make_scorer
 end
 
 function checkfun(sfunc::String)
@@ -62,10 +64,14 @@ function checkfun(sfunc::String)
     end
 end
 
+function checkfun(sfunc::Function)
+
+end
+
 """
     crossvalidate(pl::Machine,X::DataFrame,Y::Vector,sfunc::String="balanced_accuracy_score",nfolds=10)
 
-Runs K-fold cross-validation using balanced accuracy as the default. It support the 
+Runs K-fold cross-validation using balanced accuracy as the default. It supports the 
 following metrics for classification:
 - accuracy_score
 - balanced_accuracy_score
@@ -85,9 +91,13 @@ and the following metrics for regression:
 - r2_score
 - max_error
 - explained_variance_score
+
+Additionally, it supports custom metric functions by supplying a function that
+meets the requirements of sklearn's make_scorer function in the place of the
+supplied metrics.
 """
 function crossvalidate(pl::Machine,X::DataFrame,Y::Vector,
-                       sfunc::String; nfolds=10,verbose::Bool=true)
+                       sfunc::String; nfolds=10, verbose::Bool=true)
     checkfun(sfunc)
     pfunc = metric_dict[sfunc]
     metric(a,b) = pfunc(a,b)
@@ -114,6 +124,14 @@ function crossvalidate(pl::Machine,X::DataFrame,Y::Vector,
     checkfun(sfunc)
     pfunc = metric_dict[sfunc]
     metric(a,b) = pfunc(a,b,average=averagetype)
+    crossvalidate(pl,X,Y,metric,nfolds,verbose)
+end
+
+function crossvalidate(pl::Machine,X::DataFrame,Y::Vector,
+    sfunc::Function; nfolds=10, verbose::Bool=true)
+    pfunc = metric_dict["make_scorer"]
+    pfunc = pfunc(sfunc, greater_is_better=true)
+    metric(a,b) = pfunc(a,b)
     crossvalidate(pl,X,Y,metric,nfolds,verbose)
 end
 
