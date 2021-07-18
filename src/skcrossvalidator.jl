@@ -64,10 +64,6 @@ function checkfun(sfunc::String)
     end
 end
 
-function checkfun(sfunc::Function)
-
-end
-
 """
     crossvalidate(pl::Machine,X::DataFrame,Y::Vector,sfunc::String="balanced_accuracy_score",nfolds=10)
 
